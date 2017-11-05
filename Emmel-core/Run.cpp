@@ -22,9 +22,9 @@ void ProcessInput(GLFWwindow* window)
 
 int main()
 {
-	/*
-	Window Handling
-	*/
+	/*****************************************************************
+							Window Handling
+	******************************************************************/
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -49,37 +49,45 @@ int main()
 	glViewport(0, 0, 800, 600);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-	/*
-	Prereq info
-	*/
+	/*****************************************************************
+							Prerequisite info
+	******************************************************************/
 
-	float vertices[6] =
+	float vertices[] =
 	{
-		//Position
-		-0.5f, -0.5f,
-		0.5f, -0.5f,
-		0.0f, 0.5f
+		//Location			//Color				//Texture coords
+		0.5f,  0.5f, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+		0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+		-0.5f, -0.5f, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+		-0.5f,  0.5f, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
 	};
 
-	float texCoords[6]
-	{
-		0.0f, 0.0f,//Bottom left
-		0.5f, 1.0f,//Top middle
-		1.0f, 0.0f//Bottom Right
-	};
 
-	/*
-	Init
-	*/
+	/*****************************************************************
+								Initialize
+	******************************************************************/
 	unsigned int VBO, VAO;
 	glGenBuffers(1, &VBO);
 	glGenVertexArrays(1, &VAO);
 	glBindVertexArray(VAO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(float), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);//position
+	
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	//Attributes
+
+	//position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	//color
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+	glEnableVertexAttribArray(1);
+
+	//texture coords
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+	glEnableVertexAttribArray(2);
+
+
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -88,27 +96,30 @@ int main()
 	Shader Program = Shader(source_vertex, source_fragment);
 
 	Program.use();
-	/*
-	Textures
-	*/
+	
+	/*****************************************************************
+								Textures
+	******************************************************************/
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D, texture);
+
 	//Wrapping
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
 	//Filtering
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 
-	float borderC[] = { 1.0f, 1.0f, 0.0f, 1.0f};
-	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderC);
+	//float borderC[] = { 1.0f, 1.0f, 0.0f, 1.0f};
+	//glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderC);
 
 	int tWidth, tHeight, nChannels;
 	unsigned char* data = stbi_load("container.jpg", &tWidth, &tHeight, &nChannels,0);
 
-	unsigned int texture;
 	if (data)
 	{
-		glGenTextures(1, &texture);
 
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tWidth, tHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
@@ -119,9 +130,9 @@ int main()
 	}
 	stbi_image_free(data);
 
-	/*
-	Render Loop
-	*/
+	/*****************************************************************
+							Render Loop
+	******************************************************************/
 	while (!glfwWindowShouldClose(window))
 	{
 		ProcessInput(window);

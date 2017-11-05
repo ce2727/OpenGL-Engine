@@ -5,6 +5,7 @@
 #include <iostream>
 #include "Shader.h"
 #include "ShaderSource.h"
+#include "stb_image.h"
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -59,6 +60,14 @@ int main()
 		0.5f, -0.5f,
 		0.0f, 0.5f
 	};
+
+	float texCoords[6]
+	{
+		0.0f, 0.0f,//Bottom left
+		0.5f, 1.0f,//Top middle
+		1.0f, 0.0f//Bottom Right
+	};
+
 	/*
 	Init
 	*/
@@ -79,7 +88,36 @@ int main()
 	Shader Program = Shader(source_vertex, source_fragment);
 
 	Program.use();
+	/*
+	Textures
+	*/
+	//Wrapping
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+	//Filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+
+	float borderC[] = { 1.0f, 1.0f, 0.0f, 1.0f};
+	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderC);
+
+	int tWidth, tHeight, nChannels;
+	unsigned char* data = stbi_load("container.jpg", &tWidth, &tHeight, &nChannels,0);
+
+	unsigned int texture;
+	if (data)
+	{
+		glGenTextures(1, &texture);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, tWidth, tHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load image" << std::endl;
+	}
+	stbi_image_free(data);
 
 	/*
 	Render Loop
@@ -88,8 +126,11 @@ int main()
 	{
 		ProcessInput(window);
 		glClear(GL_COLOR_BUFFER_BIT);
+		/*
+		LEFT OFF HERE - https://learnopengl.com/#!Getting-started/Textures - just after the shader code. I need to re-implement the glDrawElements with the EBO
+		*/
+		glBindTexture(GL_TEXTURE_2D, texture);
 		glBindVertexArray(VAO);
-
 		glDrawArrays(GL_TRIANGLES, 0, 3); //Draw one triangle
 
 		glfwSwapBuffers(window);
